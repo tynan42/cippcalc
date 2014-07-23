@@ -34,10 +34,13 @@ def run_cippcalc():
         hard_error_msg = errors.errors
         
     if hard_error_msg is None:
-        thickness, area_lost, submitted_data = cippcalc.LM_run(input)
+        thickness, flow_change, submitted_data = cippcalc.LM_run(input)
         thickness = str(thickness)
-        area_lost = str(round(area_lost))+'%'
-        return render_template('index.html', thickness=thickness, area_lost=area_lost, return_vars=submitted_data, warning=soft_error_msg, messages=soft_error_msg)
+        if flow_change >= 0:
+            flow_message = str(round(flow_change))+'% increase in flow at 2/3 full'
+        else:
+            flow_message = str(round(flow_change))+'% decrease in flow at 2/3 full'
+        return render_template('index.html', thickness=thickness, flow_change=flow_message, return_vars=submitted_data, warning=soft_error_msg, messages=soft_error_msg)
     else:
         submitted_data = request.form
         return render_template('index.html', thickness='Error', return_vars=submitted_data, error=hard_error_msg)
