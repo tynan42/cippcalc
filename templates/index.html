@@ -38,8 +38,8 @@
 
 {% if not error %}{% if thickness %}
 <div class=info>Liner Thickness = {{ thickness }} mm
-{% if area_lost %}
-<br>{{ area_lost }} reduction in cross sectional area
+{% if flow_change %}
+<br>{{ flow_change }}
 {% endif %}
 </div>
 {% endif %}{% endif %}
