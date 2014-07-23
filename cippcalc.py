@@ -231,36 +231,65 @@ class LinerManager(object):
         liner_thickness_x1p2p2p1 = (12.0*mom_inert_min)**(1/3)
         return liner_thickness_x1p2p2p1 
     
-    def thickness_calc(self):
+    def thickness_formater(self): #formatted
         # Pull variables from dictionary
         condition = self.vardict['design_condition']
         gwload = self.vardict['gw_load']
+        thickness = self.thickness_calc()
         
-        # Calculate
+        # Format
         if (condition == 'Partially Deteriorated'):
             if (gwload <= 0):
                 liner_thickness = 'No hydraulic loading, design as fully deteriorated or use minimum thickness.'
             else:
-                liner_thickness = str('{0:.2f}'.format(round(max(self.x1p1(), self.x1p2(), self.x1p2p1p1())*25.4,2)))
+                liner_thickness = str('{0:.2f}'.format(thickness*25.4))
         elif (condition == 'Fully Deteriorated'):
-            liner_thickness = str('{0:.2f}'.format(round(max(self.x1p2p2(), self.x1p2p2p1())*25.4,2)))
+            liner_thickness = str('{0:.2f}'.format(thickness*25.4))
         else:
             liner_thickness = 'error'
         
         return liner_thickness
     
-    def thickness_check(self):
+    def thickness_calc(self): #unformatted
         # Pull variables from dictionary
-        dia_mm = 25.4*self.vardict['host_diameter']
-        liner_mm = float(self.thickness_calc())
-        new_dia = dia_mm - (2*liner_mm)
-        area_lost = (pi*(dia_mm**2)/4) - (pi*(new_dia**2)/4)
-        area_lost_percent = ((pi*(dia_mm**2)/4) - area_lost)/(pi*(dia_mm**2)/4)
+        condition = self.vardict['design_condition']
+        gwload = self.vardict['gw_load']
+
+        # Calculate
+        if (condition == 'Partially Deteriorated'):
+            if gwload <= 0:
+                liner_thickness = 0
+            else:
+                liner_thickness = max(self.x1p1(), self.x1p2(), self.x1p2p1p1()) #inches
+        elif (condition == 'Fully Deteriorated'):
+            liner_thickness = max(self.x1p2p2(), self.x1p2p2p1()) #inches
+
+        return liner_thickness
         
-        # Check against pipe size
-        return (1-area_lost_percent)*100
+    def flow_change(self):
+        # Pull variables from dictionary
+        dia = self.vardict['host_diameter']
+        liner_t = self.thickness_calc()
+        n_host = self.vardict['n_host']
+        n_liner = self.vardict['n_liner']
         
-        
+        #Calculate
+        coeff = 0.608173 #For flow at pipe 2/3 full (design flow level)
+        r_host = dia/2
+        r_lined = (dia/2)-liner_t
+        A_host = ((pi*r_host**2)*coeff)+(r_host/3)*((((r_host)**2)-((r_host/3)**2))**(0.5))
+        pw_host = (2*pi*r_host)*coeff
+        A_lined = ((pi*r_lined**2)*coeff)+(r_lined/3)*((((r_lined)**2)-((r_lined/3)**2))**(0.5))
+        pw_lined = (2*pi*r_lined)*coeff
+        slope = 0.102
+        hyd_rad_host = A_host/pw_host
+        hyd_rad_lined = A_lined/pw_lined
+        q_host = (1.486/n_host)*A_host*(hyd_rad_host**(2/3))*(slope**(1/2))
+        q_lined = (1.486/n_liner)*A_lined*(hyd_rad_lined**(2/3))*(slope**(1/2))
+        deltaQ = q_lined - q_host
+        deltaQ_pct = round((deltaQ/q_host) * 100)
+        return deltaQ_pct
+    
     def output_dict(self):
         # Convert input variables to nice format
         round_down_to0 = [
@@ -290,8 +319,9 @@ class LinerManager(object):
 
 def LM_run(input):
     lm = LinerManager(input)
-    thickness = lm.thickness_calc()
-    area_lost = lm.thickness_check()
-    return(thickness, area_lost, lm.output_dict())
+    thickness = lm.thickness_formater()
+    flow_change = lm.flow_change()
+    output_dict = lm.output_dict()
+    return(thickness, flow_change, output_dict)
 
 
