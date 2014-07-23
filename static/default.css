@@ -1,0 +1,108 @@
+body {
+	font-family: Helvetica, sans-serif;
+	color: #555;
+	font-size: 14px;
+	line-height: 20px;
+	width: 80%;
+	margin: auto;
+}
+
+h3 h2 {
+	width: 70%;
+	margin: auto;
+}
+
+h3 {
+	font-weight: bold;
+	font-size: 18px;
+	font-variant: small-caps;
+	margin: 10px 5px 10px 5px;
+}
+
+h2 {
+	font-size: 12px;
+	margin: 5px;
+	text-align: right;
+}
+
+/*input[type="text"]{
+	border: solid 1px #ccc;
+}*/
+
+#output {
+	width: 55px;
+	}
+
+input.smallnum {
+	width: 55px;
+}
+
+input.mednum {
+	width: 85px;
+}
+
+input.droplist {
+	width: 155px;
+}
+
+::selection {
+	background: none;
+}
+
+.inputname {
+	margin-left: 5px;
+}
+
+.inputchoice {
+	margin-left: 45px;
+	margin-top: 4px;
+}
+
+input:focus::-webkit-input-placeholder 
+{
+    color: transparent;
+}
+
+input:disabled::-webkit-input-placeholder 
+{
+    color: transparent;
+}
+#opt_inputs1 tr:nth-child(odd) {background-color: #E6E6E6;}
+#opt_inputs2 tr:nth-child(even) {background-color: #E6E6E6;}
+
+p.inparam {
+	height: 55px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+td.input_left {
+	margin-right: 50px;
+}
+
+table, td, th {
+	border: none;
+	border-collapse: collapse;
+	padding: 0;
+	width: 250px;
+}
+
+.inactive {
+	color: #C6C6C6;
+}
+
+td.tooltip {
+	width: 35px;
+	background: url('images/toolbar_get_info.png') no-repeat center;
+	background-size: 20px;
+}
+
+::-webkit-input-placeholder {
+	font-style: italic;
+	color: #A4AE89;
+}
+
+.output{
+	font-size: 16px;
+	font-weight: bold;
+}

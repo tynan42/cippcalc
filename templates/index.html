@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CIPP Calculator</title>
+
+<link rel=stylesheet href="{{ url_for('static', filename='reset.css') }}" type=text/css />
+<link rel=stylesheet href="{{ url_for('static', filename='default.css') }}" type=text/css />
+<link rel=stylesheet href="{{ url_for('static', filename='validation.css') }}" type=text/css />
+<link rel=stylesheet href="{{ url_for('static', filename='tooltip.css') }}" type=text/css />
+
+<script type="text/javascript" src="{{ url_for('static', filename='default.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-1.11.1.min.js') }}"></script>
+
+</head>
+
+<body onLoad="loadscript()"><div class=page>
+<br>
+<h3><p id="title">CIPP Liner Thickness Calculator</p></h3><br>
+<h2><p id="subtitle">Calculated using ASTM F1216-09</p></h2>
+
+{% if error %}
+<div class=error>
+{% for key, value in error.items() %}
+<p> • {{ value[0] }}</p>
+{% endfor %}
+</div>
+{% endif%}
+
+{% if warning %} 
+<div class=warning>
+{% for key, value in messages.items() %}
+<p> • {{ value[0] }}</p>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if not error %}{% if thickness %}
+<div class=info>Liner Thickness = {{ thickness }} mm
+{% if area_lost %}
+<br>{{ area_lost }} reduction in cross sectional area
+{% endif %}
+</div>
+{% endif %}{% endif %}
+
+</div>
+
+<form id="input_form" action="" method=post autocomplete="off">
+<table id="mand_inputs">
+	<tr class="odd">
+		<td class="input_left">
+			<p class="inparam">
+				<span class="inputname">Design Condition</span><br>
+				<input name="design_condition" id="design_condition" class="inputchoice droplist" list="designcndt" value="{{return_vars['design_condition']}}" oninput="design_option_change()">
+				<datalist id="designcndt">
+					<option value="Fully Deteriorated">
+					<option value="Partially Deteriorated">
+				</datalist>
+			</p>
+		</td>
+		<td class="tooltip">
+			<p>
+				<span>
+					<img class="callout" src="{{ url_for('static', filename='images/callout.gif') }}">
+					<strong>Design Condition</strong>
+					<br>
+					Fully deteriorated condition is designed to support hydraulic, soil, and live loads. The groundwater level, soil type and depth, and live load should be determined by the engineer.<br><br>
+					Partially deteriorated condition is designed to support the hydraulic loads due to groundwater, since the soil and surcharge loads can be supported by the original pipe. The groundwater level should be determined by the engineer and the thickness of the CIPP should be sufficient to withstand this hydrostatic pressure without collapsing.
+				</span>
+			</p>
+		</td>
+	</tr>
+	<tr class="even">
+		<td class="input_left">
+			<p class="inparam">
+				<span class="inputname">Location</span><br>
+				<input name="location" id="location" class="inputchoice droplist" list="location_list" value="{{return_vars['location']}}">
+				<datalist id="location_list">
+					<option value="Highway">
+					<option value="Rail">
+					<option value="Airport">
+				</datalist>
+			</p>
+		</td>
+		<td class="tooltip">
+			<p>
+				<span>
+					<img class="callout" src="{{ url_for('static', filename='images/callout.gif') }}">
+					<strong>Pipe Location</strong>
+					<br>
+					Use this option to apply standard AASHTO HS-20 Highway, Cooper E-80 railroad, or 180 kip airplane gear assembly live loads. The values of the live load pressures are calculated with respect to depth and include an impact factor of 1.5 to account for bumps and irregularities in the travelled surface.<br><br>
+					See <a href="http://www.americanlifelinesalliance.com/pdf/Update061305.pdf">American Lifelines Alliance</a> for additional details.
+				</span>
+			</p>
+		</td>
+	</tr>
+	<tr class="odd">
+		<td class="input_left">
+			<p class="inparam">
+			<span class="inputname">Host Pipe Diameter</span><br>
+			<input name="host_diameter" id="host_diameter" class="inputchoice smallnum" type="number" min="4" max="96" {% if return_vars['host_diameter'] %} value="{{ return_vars['host_diameter'] }}" {% else %} value="8" {% endif %}">&nbsp inches
+			</p>
+		</td>
+		<td class="tooltip">
+			<p>
+				<span>
+					<img class="callout" src="{{ url_for('static', filename='images/callout.gif') }}">
+					<strong>Inside Diameter of Host Pipe</strong>
+					<br>
+					<img src="{{ url_for('static', filename='images/OD_Pipe.jpg') }}" height="150" style="float:right;padding:20px;" alt="Pipe I.D."><br>
+					Enter the inside diameter (I.D.) of the host pipe to receive the CIPP.
+				</span>
+			</p>
+		</td>
+	</tr>
+	<tr class="even">
+		<td class="input_left">
+			<p class="inparam">
+			<span class="inputname">Depth to Invert</span><br>
+			<input name="surface_to_invert" id="surface_to_invert" class="inputchoice smallnum" type="text" {% if return_vars['surface_to_invert'] %} value="{{return_vars['surface_to_invert'] }}" {% else %} value="5.5" {% endif %}>&nbsp feet
+			</p>
+		</td>
+		<td class="tooltip">
+			<p>
+				<span>
+					<img class="callout" src="{{ url_for('static', filename='images/callout.gif') }}">
+					<strong>Depth from Surface to Invert</strong>
+					<br>
+					<img src="{{ url_for('static', filename='images/depth_to_inv.png') }}" height="200" style="float:right;" alt="Pipe I.D."><br>
+					Enter the greatest depth from ground surface to invert of host pipe.
+				</span>
+			</p>
+		</td>
+	</tr>
+	<tr class="odd">
+		<td class="input_left">
+			<p class="inparam">
+			<span class="inputname">Groundwater Depth</span><br>
+			<input name="gw_level" id="gw_level" class="inputchoice smallnum gw" type="text" maxlength="3" value="{{return_vars['gw_level']}}">&nbsp feet
+			</p>
+		</td>
+		<td class="tooltip">
+			<p>
+				<span>
+					<img class="callout" src="{{ url_for('static', filename='images/callout.gif') }}">
+					<strong>Depth to Groundwater Table</strong>
+					<br>
+					<img src="{{ url_for('static', filename='images/depth_to_gw.png') }}" height="200" style="float:right;" alt="Pipe I.D."><br>
+					Enter the smallest depth from ground surface to highest evident water table. Leave blank for unknown conditions (assumes groundwater at surface). To exclude groundwater pressures, enter a depth for the water table that is deeper than the host pipe.
+				</span>
+			</p>
+		</td>
+	</tr>
+</table>
+<hr>
+<table>
+	<tr>
+	<td>
+	<table class= "opt_inp" id="opt_inputs1">
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">CIPP Elasticity Modulus (Design)</span><br>
+				<input name="design_modulus" id="design_modulus" class="inputchoice mednum" type="text" maxlength="6" placeholder="250000" value="{{return_vars['design_modulus']}}">&nbsp psi
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Flexural Strength (Design)</span><br>
+				<input name="design_flexural_strength" id="design_flexural_strength" class="inputchoice mednum" type="text" maxlength="6" placeholder="4500" value="{{return_vars['design_flexural_strength']}}">&nbsp psi
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Factor of Safety</span><br>
+				<input name="safety_factor" id="safety_factor" class="inputchoice smallnum" type="text" maxlength="1" placeholder="2" value="{{return_vars['safety_factor']}}">
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Long-term Retention Factor</span><br>
+				<input name="ret_factor" id="ret_factor" class="inputchoice smallnum" type="text" maxlength="3" placeholder="50" value="{{return_vars['ret_factor']}}">&nbsp %
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Ovality</span><br>
+				<input name="ovality" id="ovality" class="inputchoice smallnum" type="text" maxlength="3" placeholder="3" value="{{return_vars['ovality']}}">&nbsp %
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr class="partial inactive">
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Enhancement Factor</span><br>
+				<input name="enhancement_factor" id="enhancement_factor" class="inputchoice smallnum" type="text" maxlength="5" placeholder="7.0" disabled="true" value="{{return_vars['enhancement_factor']}}">
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+	</table>
+	</td>
+	<td>
+	<table class= "opt_inp" id="opt_inputs2">
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Soil Density</span><br>
+				<input name="soil_density" id="soil_density" class="inputchoice smallnum" type="text" maxlength="5" placeholder="140" value="{{return_vars['soil_density']}}">&nbsp pcf
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Poisson's Ratio</span><br>
+				<input name="poissons" id="poissons" class="inputchoice smallnum" type="text" maxlength="5" placeholder="0.3" value="{{return_vars['poissons']}}">
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr class="fully">
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Modulus of Soil Reaction</span><br>
+				<input name="soil_mod" id="soil_mod" class="inputchoice smallnum" type="text" maxlength="5" placeholder="700" value="{{return_vars['soil_mod']}}">&nbsp psi
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Host Manning's</span><br>
+				<input name="n_host" id="n_host" class="inputchoice smallnum" type="text" maxlength="5" placeholder="0.013" value="{{return_vars['n_host']}}">
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Liner Manning's</span><br>
+				<input name="n_liner" id="n_liner" class="inputchoice smallnum" type="text" maxlength="5" placeholder="0.010" value="{{return_vars['n_liner']}}">
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+		<tr>
+			<td class="input_left">
+				<p class="inparam">
+				<span class="inputname">Age of Host Pipe</span><br>
+				<input name="host_age" id="host_age" class="inputchoice smallnum" type="text" maxlength="5" placeholder="0.010" value="{{return_vars['host_age']}}">
+				</p>
+			</td>
+			<td class="tooltip">
+				<p></p>
+			</td>
+		</tr>
+	</table>
+	</td>
+	</tr>
+</table>
+<input type="submit" name="runcalc"/ value="Calculate"><br />
+</form>
+
+</body>
+</html> 
